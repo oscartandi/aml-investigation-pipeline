@@ -1,0 +1,45 @@
+# ==============================================================================
+# Core API & Data Contracts (app/main.py, app/schemas.py, app/orchestrator.py)
+# ==============================================================================
+
+# Powers the REST API entrypoint (POST /investigate), dependency injection,
+# and automatic OpenAPI/Swagger documentation for testing investigation payloads.
+fastapi==0.115.0
+
+# ASGI web server that runs the FastAPI application locally and in production.
+uvicorn[standard]==0.30.6
+
+# Enforces strict runtime data validation and typed schemas across all pipeline
+# inputs, stage results, and final audit reports (InvestigationRequest/Report).
+pydantic==2.9.2
+
+
+# ==============================================================================
+# Stage 1: Entity Normalization & Sanctions Resolution (app/stages/sanctions.py)
+# ==============================================================================
+
+# Performs high-speed C++-backed fuzzy string matching (token_sort_ratio, WRatio)
+# to resolve noisy, misspelled, or suffix-varied entity names against watchlists.
+rapidfuzz==3.10.0
+
+
+# ==============================================================================
+# Stage 3: Multi-Hop Link & UBO / Mule Ring Forensics (app/stages/network.py)
+# ==============================================================================
+
+# Builds directed entity-relationship graphs to trace multi-hop paths to known
+# high-risk nodes, detect circular fund flows, and uncover hidden UBO exposure.
+networkx==3.4.2
+
+
+# ==============================================================================
+# Automated Testing & CI Verification (tests/test_pipeline.py)
+# ==============================================================================
+
+# Runs unit and end-to-end edge-case tests across all three stages and the
+# composite decision matrix.
+pytest==8.3.3
+
+# Async/sync HTTP client required by FastAPI's TestClient to test API endpoints
+# end-to-end without spinning up a separate live server.
+httpx==0.27.2
