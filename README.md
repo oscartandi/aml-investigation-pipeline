@@ -1,8 +1,9 @@
 # End-to-End AML Investigation Pipeline
 
-[![CI - AML Investigation Pipeline](https://github.com/oscartandi/aml-investigation-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/oscartandi/aml-investigation-pipeline/actions/workflows/ci.yml)
+[![CI - AML Investigation Pipeline](https://github.com/oscartandi/aml-investigation-pipeline/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/oscartandi/aml-investigation-pipeline/actions/workflows/ci.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688.svg)
+
 
 A unified financial crime investigation engine that orchestrates **Sanctions Entity Resolution**, **Real-Time Transaction Anomaly Detection**, and **Multi-Hop Graph Forensics** into a single auditable disposition (`ESCALATE_SAR`, `ANALYST_REVIEW`, or `AUTO_CLEAR`).
 
