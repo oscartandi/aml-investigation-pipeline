@@ -1,6 +1,10 @@
+from pathlib import Path
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from app.orchestrator import run_investigation
 from app.schemas import InvestigationReport, InvestigationRequest
+
+STATIC_DIR = Path(__file__).parent / "static"
 
 app = FastAPI(
     title="End-to-End AML Investigation Pipeline",
@@ -12,14 +16,9 @@ app = FastAPI(
 )
 
 
-@app.get("/")
-def root() -> dict[str, str]:
-    return {
-        "service": "aml-investigation-pipeline",
-        "docs": "/docs",
-        "health": "/health",
-        "investigate_endpoint": "POST /investigate",
-    }
+@app.get("/", include_in_schema=False)
+def workbench_ui() -> FileResponse:
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/health")

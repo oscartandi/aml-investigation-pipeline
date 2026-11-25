@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AML Investigation Workbench</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --panel: #131a26;
+      --panel-alt: #192233;
+      --border: #263248;
+      --text: #e6edf7;
+      --muted: #8b9bb4;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.14);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.14);
+      --mono: "Cascadia Code", "Fira Code", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    .container { max-width: 1320px; margin: 0 auto; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .title-group h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
+    .title-group p { color: var(--muted); font-size: 0.88rem; }
+
+    .header-links { display: flex; gap: 10px; align-items: center; }
+    .pill-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      transition: 0.15s;
+    }
+    .pill-link:hover { color: var(--text); border-color: var(--accent); }
+
+    .presets {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .presets span { font-size: 0.82rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .preset-btn {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 7px 13px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .preset-btn:hover { border-color: var(--accent); background: var(--panel-alt); }
+    .preset-btn.active { border-color: var(--accent); background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .card-title { font-size: 0.92rem; font-weight: 600; color: var(--text); }
+
+    textarea {
+      width: 100%;
+      height: 440px;
+      background: #080b11;
+      color: #cbd5e1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      resize: vertical;
+      line-height: 1.45;
+    }
+    textarea:focus { outline: none; border-color: var(--accent); }
+
+    .run-btn {
+      width: 100%;
+      margin-top: 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .run-btn:hover { background: var(--accent-hover); }
+
+    /* Right column results */
+    .results-stack { display: flex; flex-direction: column; gap: 16px; }
+
+    .banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .banner.ESCALATE_SAR { border-color: rgba(239, 68, 68, 0.5); background: linear-gradient(135deg, rgba(239,68,68,0.12), var(--panel)); }
+    .banner.ANALYST_REVIEW { border-color: rgba(245, 158, 11, 0.5); background: linear-gradient(135deg, rgba(245,158,11,0.12), var(--panel)); }
+    .banner.AUTO_CLEAR { border-color: rgba(16, 185, 129, 0.5); background: linear-gradient(135deg, rgba(16,185,129,0.12), var(--panel)); }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .badge.ESCALATE_SAR { background: var(--red-bg); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .badge.ANALYST_REVIEW { background: var(--amber-bg); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge.AUTO_CLEAR { background: var(--green-bg); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+    .score-box { text-align: right; }
+    .score-num { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+    .score-label { font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .stages-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 820px) { .stages-grid { grid-template-columns: 1fr; } }
+
+    .stage-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .stage-card.flagged { border-color: rgba(239, 68, 68, 0.45); }
+
+    .stage-top { display: flex; justify-content: space-between; align-items: center; }
+    .stage-name { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .stage-score { font-size: 1.15rem; font-weight: 700; }
+
+    .bar-track { height: 6px; background: #0a0e16; border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; transition: width 0.35s ease; }
+
+    .reasons-list { list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: #cbd5e1; }
+    .reasons-list li { padding-left: 12px; position: relative; }
+    .reasons-list li::before { content: "•"; position: absolute; left: 0; color: var(--accent); }
+
+    .bottom-split {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 16px;
+    }
+    @media (max-width: 820px) { .bottom-split { grid-template-columns: 1fr; } }
+
+    .narrative-box {
+      background: #0a0e16;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 0.86rem;
+      color: #dbeafe;
+      line-height: 1.6;
+    }
+
+    canvas {
+      width: 100%;
+      height: 210px;
+      background: #080b11;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: block;
+    }
+
+    .error-msg {
+      color: #fca5a5;
+      background: var(--red-bg);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      display: none;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title-group">
+        <h1>AML Investigation Workbench</h1>
+        <p>Unified Sanctions Entity Resolution, Transaction Anomaly Scoring &amp; Multi-Hop Graph Forensics</p>
+      </div>
+      <div class="header-links">
+        <a class="pill-link" href="/docs" target="_blank">Swagger API (/docs)</a>
+        <a class="pill-link" href="/health" target="_blank">Health Check</a>
+      </div>
+    </header>
+
+    <div class="presets">
+      <span>Test Scenarios:</span>
+      <button class="preset-btn active" onclick="loadPreset('ubo_ring', this)">1. Clean Name + Hidden UBO &amp; Cycle</button>
+      <button class="preset-btn" onclick="loadPreset('sanctions_hit', this)">2. Exact Sanctions Alias Hit</button>
+      <button class="preset-btn" onclick="loadPreset('dob_conflict', this)">3. DOB Conflict False-Positive Check</button>
+      <button class="preset-btn" onclick="loadPreset('benign', this)">4. Benign Customer (Auto-Clear)</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Case Payload (JSON)</span>
+          <span style="font-size: 0.76rem; color: var(--muted);">Editable</span>
+        </div>
+        <textarea id="payloadInput" spellcheck="false"></textarea>
+        <button class="run-btn" onclick="runInvestigation()">Run End-to-End Investigation</button>
+        <div id="errorBox" class="error-msg"></div>
+      </div>
+
+      <div class="results-stack">
+        <div id="dispositionBanner" class="banner">
+          <div>
+            <div style="font-size: 0.78rem; color: var(--muted); margin-bottom: 6px;">CASE DISPOSITION</div>
+            <span id="dispositionBadge" class="badge">LOADING...</span>
+            <div id="caseMeta" style="font-size: 0.84rem; color: var(--muted); margin-top: 8px;"></div>
+          </div>
+          <div class="score-box">
+            <div id="compositeScore" class="score-num">--</div>
+            <div class="score-label">Composite Risk / 100</div>
+          </div>
+        </div>
+
+        <div id="stagesGrid" class="stages-grid"></div>
+
+        <div class="bottom-split">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Automated SAR / Audit Narrative</span>
+            </div>
+            <div id="auditNarrative" class="narrative-box">Run a case to generate the audit narrative.</div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Entity Link Topology</span>
+              <span style="font-size: 0.74rem; color: var(--muted);">Red = High-Risk Node</span>
+            </div>
+            <canvas id="graphCanvas" width="380" height="210"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PRESETS = {
+      ubo_ring: {
+        case_id: "CASE-104",
+        entity: {
+          entity_id: "ENT-CLEAN-99",
+          name: "Bluewater Horizon Exports Pvt Ltd",
+          entity_type: "CORPORATE",
+          country: "SG"
+        },
+        transaction: {
+          amount_usd: 9400.0,
+          tx_count_24h: 5,
+          total_volume_24h: 47000.0,
+          counterparty_country: "AE"
+        },
+        network_edges: [
+          { source: "ENT-CLEAN-99", target: "SHELL-77", relation: "BENEFICIAL_OWNER", weight: 1.0 },
+          { source: "SHELL-77", target: "MULE-55", relation: "TRANSFER", weight: 1.0 },
+          { source: "MULE-55", target: "ENT-CLEAN-99", relation: "TRANSFER", weight: 1.0 }
+        ],
+        known_high_risk_nodes: ["SHELL-77"]
+      },
+      sanctions_hit: {
+        case_id: "CASE-101",
+        entity: {
+          entity_id: "ENT-001",
+          name: "Victor Sokolov",
+          entity_type: "INDIVIDUAL",
+          country: "RU",
+          dob: "1974-08-19"
+        }
+      },
+      dob_conflict: {
+        case_id: "CASE-103",
+        entity: {
+          entity_id: "ENT-003",
+          name: "Viktor Petrovich Sokolov",
+          entity_type: "INDIVIDUAL",
+          country: "US",
+          dob: "1992-03-11"
+        }
+      },
+      benign: {
+        case_id: "CASE-105",
+        entity: {
+          entity_id: "ENT-SAFE-01",
+          name: "Priya Nair",
+          entity_type: "INDIVIDUAL",
+          country: "IN"
+        },
+        transaction: {
+          amount_usd: 450.0,
+          tx_count_24h: 1,
+          total_volume_24h: 450.0,
+          counterparty_country: "IN"
+        }
+      }
+    };
+
+    const STAGE_LABELS = {
+      sanctions_resolution: "Stage 1: Sanctions",
+      transaction_anomaly: "Stage 2: Tx Anomaly",
+      network_forensics: "Stage 3: Graph Forensics"
+    };
+
+    function loadPreset(key, btn) {
+      document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+      document.getElementById("payloadInput").value = JSON.stringify(PRESETS[key], null, 2);
+      runInvestigation();
+    }
+
+    function scoreColor(score) {
+      if (score >= 65) return "#ef4444";
+      if (score >= 30) return "#f59e0b";
+      return "#10b981";
+    }
+
+    async function runInvestigation() {
+      const errorBox = document.getElementById("errorBox");
+      errorBox.style.display = "none";
+
+      let payload;
+      try {
+        payload = JSON.parse(document.getElementById("payloadInput").value);
+      } catch (e) {
+        errorBox.textContent = "Invalid JSON syntax: " + e.message;
+        errorBox.style.display = "block";
+        return;
+      }
+
+      try {
+        const res = await fetch("/investigate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(JSON.stringify(data.detail || data));
+        }
+        renderReport(data, payload);
+      } catch (err) {
+        errorBox.textContent = "API Error: " + err.message;
+        errorBox.style.display = "block";
+      }
+    }
+
+    function renderReport(report, payload) {
+      const banner = document.getElementById("dispositionBanner");
+      banner.className = "banner " + report.disposition;
+
+      const badge = document.getElementById("dispositionBadge");
+      badge.className = "badge " + report.disposition;
+      badge.textContent = report.disposition;
+
+      document.getElementById("caseMeta").textContent =
+        `${report.case_id} • Subject: ${payload.entity?.name || "Unknown"} (${payload.entity?.entity_id || ""})`;
+
+      const scoreEl = document.getElementById("compositeScore");
+      scoreEl.textContent = report.composite_risk_score.toFixed(1);
+      scoreEl.style.color = scoreColor(report.composite_risk_score);
+
+      const grid = document.getElementById("stagesGrid");
+      grid.innerHTML = "";
+      report.stages.forEach(stage => {
+        const color = scoreColor(stage.score);
+        const card = document.createElement("div");
+        card.className = "stage-card" + (stage.flagged ? " flagged" : "");
+        const reasonsHtml = stage.reasons.map(r => `<li>${r}</li>`).join("");
+        card.innerHTML = `
+          <div class="stage-top">
+            <span class="stage-name">${STAGE_LABELS[stage.stage] || stage.stage}</span>
+            <span class="stage-score" style="color:${color}">${stage.score.toFixed(1)}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${stage.score}%; background:${color};"></div>
+          </div>
+          <ul class="reasons-list">${reasonsHtml}</ul>
+        `;
+        grid.appendChild(card);
+      });
+
+      document.getElementById("auditNarrative").textContent = report.audit_narrative;
+      drawGraph(payload);
+    }
+
+    function drawGraph(payload) {
+      const canvas = document.getElementById("graphCanvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const edges = payload.network_edges || [];
+      const highRisk = new Set(payload.known_high_risk_nodes || []);
+      const targetId = payload.entity?.entity_id;
+
+      const nodeIds = new Set();
+      if (targetId) nodeIds.add(targetId);
+      edges.forEach(e => { nodeIds.add(e.source); nodeIds.add(e.target); });
+
+      const nodes = Array.from(nodeIds);
+      if (nodes.length === 0) return;
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const radius = nodes.length === 1 ? 0 : 72;
+      const coords = {};
+
+      nodes.forEach((id, idx) => {
+        const angle = (2 * Math.PI * idx) / nodes.length - Math.PI / 2;
+        coords[id] = {
+          x: cx + radius * Math.cos(angle),
+          y: cy + radius * Math.sin(angle)
+        };
+      });
+
+      // Draw directed edges
+      edges.forEach(e => {
+        const from = coords[e.source];
+        const to = coords[e.target];
+        if (!from || !to) return;
+
+        ctx.strokeStyle = e.relation === "BENEFICIAL_OWNER" ? "#f59e0b" : "#475569";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+
+        // Arrowhead
+        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        const arrowX = to.x - 16 * Math.cos(angle);
+        const arrowY = to.y - 16 * Math.sin(angle);
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.beginPath();
+        ctx.moveTo(arrowX, arrowY);
+        ctx.lineTo(arrowX - 7 * Math.cos(angle - 0.4), arrowY - 7 * Math.sin(angle - 0.4));
+        ctx.lineTo(arrowX - 7 * Math.cos(angle + 0.4), arrowY - 7 * Math.sin(angle + 0.4));
+        ctx.closePath();
+        ctx.fill();
+
+        // Edge label
+        const midX = (from.x + to.x) / 2;
+        const midY = (from.y + to.y) / 2;
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "10px sans-serif";
+        ctx.fillText(e.relation, midX + 4, midY - 4);
+      });
+
+      // Draw nodes
+      nodes.forEach(id => {
+        const { x, y } = coords[id];
+        ctx.beginPath();
+        ctx.arc(x, y, 13, 0, 2 * Math.PI);
+        if (highRisk.has(id)) {
+          ctx.fillStyle = "#ef4444";
+        } else if (id === targetId) {
+          ctx.fillStyle = "#3b82f6";
+        } else {
+          ctx.fillStyle = "#334155";
+        }
+        ctx.fill();
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = "#f8fafc";
+        ctx.font = "bold 11px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(id, x, y + 25);
+      });
+    }
+
+    // Load default preset on startup
+    loadPreset("ubo_ring", document.querySelector(".preset-btn"));
+  </script>
+</body>
+</html>
